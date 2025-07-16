@@ -1,0 +1,37 @@
+﻿@model MovieTicketMVC.Models.Movie
+
+@{
+    ViewBag.Title = "Movie Details";
+    string url = Url.Content(Model.LocalTrailerPath);
+    string ext = System.IO.Path.GetExtension(Model.LocalTrailerPath).ToLowerInvariant();
+    string mime = ext switch
+    {
+        ".webm" => "video/webm",
+        ".ogg" => "video/ogg",
+        _ => "video/mp4"
+    };
+}
+
+<h2>@Model.Title</h2>
+
+<p><strong>Должина:</strong> @Model.LengthInMinutes минути</p>
+<p><strong>Почеток на проекција:</strong> @Model.ReleaseDate.ToString("dd.MM.yyyy")</p>
+<p><strong>Жанр:</strong> @Model.Genre</p>
+<p><strong>Опис:</strong> @Model.Description</p>
+<p><strong>Рестрикција:</strong> @(Model.IsForAdults == null ? "N/A" : (Model.IsForAdults == true ? " 18+" : " Нема"))</p>
+<p><strong>Рејтинг:</strong> @(Model.Rating.HasValue ? Model.Rating.Value.ToString("0.##") : "N/A")</p>
+<p><strong>Актери:</strong> @Model.Actors</p>
+<p><strong>Трејлер:</strong></p>
+@if (!string.IsNullOrEmpty(Model.LocalTrailerPath))
+{
+    <video width="600" controls>
+        <source src="@url" type="@mime" />
+        Your browser does not support the video tag.
+    </video>
+}
+else
+{
+    <p>No trailer available.</p>
+}
+
+<p><strong>Јазик:</strong> @Model.Language</p>

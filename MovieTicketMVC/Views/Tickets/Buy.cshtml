@@ -1,0 +1,507 @@
+﻿@model MovieTicketMVC.Models.Ticket
+
+@{
+    ViewBag.Title = "Buy Ticket";
+    var currentMovies = ViewBag.CurrentMovies as List<MovieTicketMVC.Models.Movie> ?? new List<MovieTicketMVC.Models.Movie>();
+    var comingSoonMovies = ViewBag.ComingSoonMovies as List<MovieTicketMVC.Models.Movie> ?? new List<MovieTicketMVC.Models.Movie>();
+    var userSeats = Model.SelectedSeats?.Split(',') ?? new string[0];
+}
+
+<h2>Купи билет</h2>
+
+@using (Html.BeginForm("Buy", "Tickets", FormMethod.Post, new { id = "ticketForm" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div class="form-group">
+        <label for="MovieId">Одберете филм:</label>
+        <select id="MovieId" name="MovieId" class="form-control">
+            <option value="">Одберете филм ▼</option>
+            <optgroup label="Актуелни филмови">
+                @foreach (var movie in currentMovies)
+                {
+                    bool selected = (Model.MovieId == movie.Id);
+                    <option value="@movie.Id"
+                            data-release="@movie.ReleaseDate.ToString("yyyy-MM-dd")"
+                            @(selected ? "selected" : "")>
+                        @movie.Title
+                    </option>
+                }
+            </optgroup>
+            <optgroup label="Наскоро">
+                @foreach (var movie in comingSoonMovies)
+                {
+                    bool selected = (Model.MovieId == movie.Id);
+                    <option value="@movie.Id"
+                            data-release="@movie.ReleaseDate.ToString("yyyy-MM-dd")"
+                            @(selected ? "selected" : "")>
+                        @movie.Title
+                    </option>
+                }
+            </optgroup>
+        </select>
+        @Html.ValidationMessageFor(m => m.MovieId, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="SelectedDay">Одберете ден:</label>
+        @Html.TextBoxFor(m => m.SelectedDay, new { @class = "form-control", type = "date", id = "SelectedDay", disabled = "disabled" })
+        @Html.ValidationMessageFor(m => m.SelectedDay, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="SelectedTime">Одберете време:</label>
+        <select id="SelectedTime" name="SelectedTime" class="form-control" disabled>
+            <option value="">Одберете време ▼</option>
+            <option value="10:00" @(Model.SelectedTime == "10:00" ? "selected" : "")>10:00</option>
+            <option value="14:00" @(Model.SelectedTime == "14:00" ? "selected" : "")>14:00</option>
+            <option value="18:00" @(Model.SelectedTime == "18:00" ? "selected" : "")>18:00</option>
+            <option value="21:00" @(Model.SelectedTime == "21:00" ? "selected" : "")>21:00</option>
+        </select>
+        @Html.ValidationMessageFor(m => m.SelectedTime, "", new { @class = "text-danger" })
+        <div id="timeErrorMessage" class="text-danger" style="display:none; margin-top:5px;"></div>
+    </div>
+
+    <div class="form-group">
+        <label>Одберете седишта:</label>
+        <br />
+        <div style="margin-left:230px; font-weight:bold;">Платно</div>
+        <div>-----------------------------------------------------------------------------------</div>
+        <br />
+
+        <input type="hidden" id="selectedSeatsHidden" name="selectedSeats" value="@Model.SelectedSeats" />
+        @Html.HiddenFor(m => m.UnavailableSeats, new { id = "unavailableSeatsHidden" })
+
+        <div class="seat-map">
+            @for (int row = 1; row <= 10; row++)
+            {
+                <div class="seat-row">
+                    <div class="row-label">@row</div>
+
+                    @for (int col = 1; col <= 5; col++)
+                    {
+                        string seatId = $"R{row}C{col}";
+                        bool isPreviouslySelected = userSeats.Contains(seatId);
+                        <div class="seat-circle @(isPreviouslySelected ? "selected" : "")"
+                             data-seat="@seatId"
+                             data-row="@row"
+                             title="@seatId">
+                            @col
+                        </div>
+                    }
+
+                    <div class="aisle-spacer"></div>
+
+                    @for (int col = 6; col <= 10; col++)
+                    {
+                        string seatId = $"R{row}C{col}";
+                        bool isPreviouslySelected = userSeats.Contains(seatId);
+                        <div class="seat-circle @(isPreviouslySelected ? "selected" : "")"
+                             data-seat="@seatId"
+                             data-row="@row"
+                             title="@seatId">
+                            @col
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <br />
+        <div id="totalPriceContainer" style="margin-left:200px; font-size:18px;">
+            Вкупна цена: <span id="totalPrice" style="font-weight:bold;">0</span> ден.
+        </div>
+        @Html.ValidationMessageFor(m => m.SelectedSeats, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label>Години:</label>
+        <div>
+            <label>
+                @Html.RadioButtonFor(m => m.AgeCategory, "18+")
+                18+
+            </label>
+            <label style="margin-left:20px;">
+                @Html.RadioButtonFor(m => m.AgeCategory, "Under18")
+                Под 18
+            </label>
+        </div>
+        @Html.ValidationMessageFor(m => m.AgeCategory, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group">
+        <label for="Email">Емаил:</label>
+        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", id = "Email" })
+        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">Купи билет</button>
+}
+
+@section scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        $(function () {
+            var seatHub = $.connection.seatHub;
+
+            seatHub.client.seatLocked = function (movieId, day, time, seatId) {
+                $('.seat-circle[data-seat="' + seatId + '"]').addClass('unavailable').removeClass('selected');
+            };
+            seatHub.client.seatUnlocked = function (movieId, day, time, seatId) {
+                $('.seat-circle[data-seat="' + seatId + '"]').removeClass('unavailable');
+            };
+
+            $.connection.hub.start().done(function () {
+                $('.seat-circle').on('click', function () {
+                    var $this = $(this);
+                    var seatId = $this.data('seat');
+                    var day = $('#SelectedDay').val();
+                    var time = $('#SelectedTime').val();
+                    var movie = $('#MovieId').val();
+
+                    if ($this.hasClass('selected')) {
+                        seatHub.server.unlockSeat(movie, day, time, seatId);
+                        $this.removeClass('selected');
+                    }
+                    else {
+                        seatHub.server.lockSeat(movie, day, time, seatId)
+                            .done(function (ok) {
+                                if (ok) {
+                                    $this.addClass('selected');
+                                    calculateTotal();
+                                } else {
+                                    alert('Седиштето е токму сега зафатено од друг корисник.');
+                                    $this.addClass('unavailable');
+                                }
+                            });
+                    }
+                });
+
+                $(window).on('beforeunload', function () {
+                    $('.seat-circle.selected').each(function () {
+                        var sid = $(this).data('seat');
+                        seatHub.server.unlockSeat($('#MovieId').val(),
+                            $('#SelectedDay').val(),
+                            $('#SelectedTime').val(),
+                            sid);
+                    });
+                });
+            });
+        });
+
+        (function () {
+            var movieSelect = document.getElementById("MovieId");
+            var dayInput = document.getElementById("SelectedDay");
+            var timeSelect = document.getElementById("SelectedTime");
+            var seats = document.querySelectorAll(".seat-circle");
+            var selectedSeatsHidden = document.getElementById("selectedSeatsHidden");
+            var totalPriceSpan = document.getElementById("totalPrice");
+            var timeErrorMessage = document.getElementById("timeErrorMessage");
+
+            seats.forEach(function (seat) {
+                seat.addEventListener("click", function () {
+                    if (seat.classList.contains("unavailable")) return;
+
+                    seat.classList.toggle("selected");
+                    calculateTotal();
+                });
+            });
+
+            dayInput.disabled = true;
+            timeSelect.disabled = true;
+            disableAllSeats();
+            if (timeSelect.value !== "") {
+                timeSelect.disabled = false;
+            }
+
+            movieSelect.addEventListener("change", function () {
+                resetSeatSelections();
+
+                if (!movieSelect.value) {
+                    dayInput.value = "";
+                    dayInput.disabled = true;
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                }
+                else {
+                    updateDayInputMin();   
+                    dayInput.value = "";
+                    dayInput.disabled = false;
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+
+                    disableAllSeats();
+                }
+            });
+
+            dayInput.addEventListener("change", function () {
+                resetSeatSelections();
+                if (!dayInput.value || isBeforeEarliestDay(dayInput.value)) {
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                } else {
+                    timeSelect.disabled = false;
+                }
+            });
+
+            function getEarliestValidDate() {
+                var selectedOption = movieSelect.options[movieSelect.selectedIndex];
+                var releaseStr = selectedOption ? selectedOption.getAttribute("data-release") : null;
+                var releaseDate = releaseStr ? new Date(releaseStr) : new Date(1900, 0, 1);
+                var today = new Date();
+                today.setHours(0,0,0,0);
+                releaseDate.setHours(0,0,0,0);
+                return (today > releaseDate) ? today : releaseDate;
+            }
+
+            function updateDayInputMin() {
+                var earliest = getEarliestValidDate();
+                var offsetMinutes = earliest.getTimezoneOffset();
+                earliest.setMinutes(earliest.getMinutes() - offsetMinutes);
+
+                dayInput.min = earliest.toISOString().split("T")[0];
+            }
+
+            function isBeforeEarliestDay(dayVal) {
+                if (!dayVal) return true;
+                var chosen = new Date(dayVal);
+                chosen.setHours(0,0,0,0);
+                var earliest = getEarliestValidDate();
+                return chosen < earliest;
+            }
+
+            function isToday(dayVal) {
+                if (!dayVal) return false;
+                var selectedDate = new Date(dayVal);
+                var today = new Date();
+                selectedDate.setHours(0,0,0,0);
+                today.setHours(0,0,0,0);
+                return selectedDate.getTime() === today.getTime();
+            }
+
+            function isTimeElapsed(timeVal) {
+                if (!timeVal) return false;
+                var parts = timeVal.split(":");
+                var selectedTime = new Date();
+                selectedTime.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
+                return new Date() > selectedTime;
+            }
+
+            function disableAllSeats() {
+                seats.forEach(function (s) {
+                    s.style.pointerEvents = "none";
+                    s.style.opacity = "0.6";
+                });
+            }
+
+            function enableAllSeats() {
+                seats.forEach(function (s) {
+                    if (!s.classList.contains("unavailable")) {
+                        s.style.pointerEvents = "auto";
+                        s.style.opacity = "1";
+                    }
+                });
+            }
+
+            function resetSeatSelections() {
+                seats.forEach(function (s) {
+                    s.classList.remove("selected");
+                });
+                calculateTotal();
+            }
+
+            function calculateTotal() {
+                let total = 0;
+                let seatIds = [];
+                document.querySelectorAll(".seat-circle.selected").forEach(function (selectedSeat) {
+                    var rowNum = parseInt(selectedSeat.getAttribute("data-row"));
+                    var seatId = selectedSeat.getAttribute("data-seat");
+                    seatIds.push(seatId);
+
+                    total += (rowNum <= 2) ? 500 : 250;
+                });
+
+                selectedSeatsHidden.value = seatIds.join(",");
+                totalPriceSpan.textContent = total;
+            }
+
+            function showTimeError(msg) {
+                timeErrorMessage.textContent = msg;
+                timeErrorMessage.style.display = "block";
+            }
+            function clearTimeError() {
+                timeErrorMessage.textContent = "";
+                timeErrorMessage.style.display = "none";
+            }
+
+            function loadUnavailableSeats() {
+                var movieId = movieSelect.value;
+                var dayVal = dayInput.value;
+                var timeVal = timeSelect.value;
+                if (!movieId || !dayVal || !timeVal) return;
+
+                var url = '@Url.Action("GetUnavailableSeats", "Tickets")'
+                    + '?movieId=' + movieId
+                    + '&day=' + encodeURIComponent(dayVal)
+                    + '&time=' + encodeURIComponent(timeVal);
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        seats.forEach(function (s) {
+                            s.classList.remove("unavailable");
+                            s.style.pointerEvents = "auto";
+                            s.style.opacity = "1";
+                        });
+
+                        data.forEach(function(seatId) {
+                            var seatDiv = document.querySelector('.seat-circle[data-seat="' + seatId + '"]');
+                            if (seatDiv) {
+                                seatDiv.classList.add("unavailable");
+                                seatDiv.classList.remove("selected");
+                                seatDiv.style.pointerEvents = "none";
+                                seatDiv.style.opacity = "0.6";
+                            }
+                        });
+                        calculateTotal();
+                    })
+                    .catch(err => console.error(err));
+            }
+
+            seats.forEach(function (seat) {
+                seat.addEventListener("click", function () {
+                    if (seat.classList.contains("unavailable")) return;
+                    seat.classList.toggle("selected");
+                    calculateTotal();
+                });
+            });
+
+            movieSelect.addEventListener("change", function () {
+                if (!movieSelect.value) {
+                    dayInput.value = "";
+                    updateDayInputMin();
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                } else {
+                    updateDayInputMin();
+                    dayInput.value = "";
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                }
+            });
+
+            dayInput.addEventListener("change", function () {
+                resetSeatSelections();
+                if (!dayInput.value || isBeforeEarliestDay(dayInput.value)) {
+                    timeSelect.value = "";
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                } else {
+                    timeSelect.disabled = false;
+                }
+            });
+
+            timeSelect.addEventListener("change", function () {
+                clearTimeError();
+                resetSeatSelections();
+
+                if (!timeSelect.value) {
+                    disableAllSeats();
+                    return;
+                }
+                if (isToday(dayInput.value) && isTimeElapsed(timeSelect.value)) {
+                    showTimeError("Извинете, времето за избраната проекција е истечено.");
+                    disableAllSeats();
+                } else {
+                    enableAllSeats();
+                    loadUnavailableSeats();
+                }
+            });
+
+            seats.forEach(function (seat) {
+                seat.addEventListener("click", function () {
+                    if (seat.style.pointerEvents === "none") return;
+                    seat.classList.toggle("selected");
+                    calculateTotal();
+                });
+            });
+
+            updateDayInputMin();
+
+            if (dayInput.value && !isBeforeEarliestDay(dayInput.value)) {
+                timeSelect.disabled = false;
+            }
+            calculateTotal();
+
+            var hasErrors = document.querySelector(".text-danger ul li") !== null;
+            if (hasErrors) {
+                if (movieSelect.value
+                    && dayInput.value
+                    && !isBeforeEarliestDay(dayInput.value)
+                    && timeSelect.value
+                    && !(isToday(dayInput.value) && isTimeElapsed(timeSelect.value))) {
+                    timeSelect.disabled = false;
+                    enableAllSeats();
+                }
+                else {
+                    timeSelect.disabled = true;
+                    disableAllSeats();
+                }
+            }
+            calculateTotal();
+        })();
+    </script>
+}
+
+<style>
+    .seat-map {
+        display: inline-block;
+        padding: 10px;
+    }
+
+    .seat-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .row-label {
+        width: 20px;
+        text-align: right;
+        margin-right: 15px;
+        font-weight: bold;
+    }
+
+    .aisle-spacer {
+        width: 20px;
+    }
+
+    .seat-circle {
+        width: 40px;
+        height: 40px;
+        margin-right: 5px;
+        border-radius: 50%;
+        background-color: #ccc;
+        color: #000;
+        line-height: 40px;
+        text-align: center;
+        font-weight: bold;
+        user-select: none;
+        cursor: pointer;
+    }
+
+    .seat-circle.selected {
+        background-color: #90ee90;
+    }
+
+    .seat-circle.unavailable {
+        background-color: #f08080; 
+        cursor: not-allowed;
+    }
+</style>

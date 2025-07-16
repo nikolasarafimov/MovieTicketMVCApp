@@ -1,0 +1,15 @@
+﻿@{
+    ViewBag.Title = "Login required";
+}
+<main>
+    <div class="alert alert-info">
+        За пристап до купување на билети, ве молиме најавете се.
+    </div>
+    <div class="text-center" style="margin-top:1rem">
+        <a class="btn btn-primary"
+           href="@Url.Action("Login", "Account")">
+            Log in
+        </a>
+
+    </div>
+</main>

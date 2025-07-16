@@ -1,0 +1,53 @@
+﻿@model MovieTicketMVC.Models.Movie
+
+@{
+    ViewBag.Title = "Delete";
+}
+
+<h2>Бришење</h2>
+
+<h3>Дали сте сигурни дека сакате да го избришете овој филм?</h3>
+<div>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            Наслов:
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Title)
+        </dd>
+
+        <dt>
+            Должина:
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.LengthInMinutes)
+        </dd>
+
+        <dt>
+            Датум на проекција:
+        </dt>
+
+        <dd>
+            @Model.ReleaseDate.ToString("dd.MM.yyyy")
+        </dd>
+    </dl>
+
+    @using (Html.BeginForm()) {
+        @Html.AntiForgeryToken()
+
+        <div>
+            <input type="submit" value="Избриши" class="btn btn-primary" style="margin-right:10px" />
+            @if (Model.IsCurrentlyShowing)
+            {
+                @Html.ActionLink("Врати се назад", "Current", "Movies", null, new { @class = "btn btn-secondary" })
+            }
+            else
+            {
+                @Html.ActionLink("Врати се назад", "ComingSoon", "Movies", null, new { @class = "btn btn-secondary" })
+            }
+        </div>
+     }
+</div>

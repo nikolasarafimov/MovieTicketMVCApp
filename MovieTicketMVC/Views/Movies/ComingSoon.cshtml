@@ -1,0 +1,63 @@
+﻿@model IEnumerable<MovieTicketMVC.Models.Movie>
+@{
+    ViewBag.Title = "Coming Soon";
+}
+
+<h2>Наскоро</h2>
+
+<form method="get" action="@Url.Action("ComingSoon", "Movies")" style="display:flex; align-items:center;">
+    <p>
+        Пребарај филм: <input type="text" name="searchString" value="@Request["searchString"]" />
+        <input type="submit" value="Пребарај" />
+    </p>
+
+    <select name="ageFilter" onchange="this.form.submit()" class="form-control" style="margin-left:10px; width:120px; height:30px; margin-bottom:15px; padding:3px;">
+        <option value="">Рестрикција: ▼</option>
+        <option value="Over18" @(Request["ageFilter"] == "Over18" ? "selected" : "")>18+</option>
+    </select>
+</form>
+
+@if (User.IsInRole("Admin"))
+{
+    <p>
+        <a href="@Url.Action("Create", "Movies")" class="btn btn-primary">Додади нов филм</a>
+    </p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.ActionLink("Наслов", "ComingSoon", new
+                {
+                    sortOrder = ViewBag.TitleSortParam,
+                    ageFilter = Request["ageFilter"]
+                })
+            </th>
+            <th>Должина (мин)</th>
+            <th>Почеток на проекција</th>
+            <th>Жанр</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Title</td>
+                <td>@item.LengthInMinutes</td>
+                <td>@item.ReleaseDate.ToString("dd.MM.yyyy")</td>
+                <td>@item.Genre</td>
+                <td>
+                    @Html.ActionLink("Детали", "Details", new { id = item.Id })
+                    @if (User.IsInRole("Admin"))
+                    {
+                        @: |
+                        @Html.ActionLink("Уреди", "Edit", new { id = item.Id })
+                        @: |
+                        @Html.ActionLink("Избриши", "Delete", new { id = item.Id })
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

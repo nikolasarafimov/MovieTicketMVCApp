@@ -1,0 +1,70 @@
+﻿@model IEnumerable<MovieTicketMVC.Models.Ticket>
+
+@{
+    ViewBag.Title = "All Tickets";
+}
+
+<h2>Историја на купени билети</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Филм</th>
+            <th>Датум</th>
+            <th>Време</th>
+            <th>Седишта</th>
+            <th>Цена</th>
+            <th>Емаил</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model)
+        {
+            <tr>
+                <td>@t.Movie.Title</td>
+                <td>@t.SelectedDay.ToString("dd.MM.yyyy")</td>
+                <td>@t.SelectedTime</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(t.SelectedSeats))
+                    {
+                        var seatData = t.SelectedSeats
+                            .Split(',')
+                            .Select(seatId =>
+                            {
+                                var parts = seatId.Split('C');
+                                var rowPart = parts[0].Substring(1); // remove 'R'
+                                var colPart = parts[1];
+
+                                return new
+                                {
+                                    Row = int.Parse(rowPart),
+                                    Col = int.Parse(colPart)
+                                };
+                            })
+                            .ToList();
+
+                        var seatGroups = seatData
+                            .GroupBy(s => s.Row)
+                            .OrderBy(g => g.Key); 
+
+                        foreach (var group in seatGroups)
+                        {
+                            var columns = group
+                                .OrderBy(x => x.Col)
+                                .Select(x => x.Col)
+                                .ToList();
+
+                            <p>Ред @group.Key: @string.Join(", ", columns)</p>
+                        }
+                    }
+                    else
+                    {
+                        <span>Нема селектирани седишта!</span>
+                    }
+                </td>
+                <td>@t.TotalPrice ден.</td>
+                <td>@t.Email</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,81 @@
+﻿@model MovieTicketMVC.Models.Ticket
+
+@{
+    ViewBag.Title = "Summary";
+}
+
+<h2>Резултат од купување</h2>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<table class="table table-bordered">
+    <tr>
+        <th>Филм:</th>
+        <td>@Model.Movie.Title</td>
+    </tr>
+    <tr>
+        <th>Датум:</th>
+        <td>@Model.SelectedDay.ToString("dd.MM.yyyy")</td>
+    </tr>
+    <tr>
+        <th>Време:</th>
+        <td>@Model.SelectedTime</td>
+    </tr>
+    <tr>
+        <th>Седишта:</th>
+        <td>
+            @if (!string.IsNullOrEmpty(Model.SelectedSeats))
+            {
+                var seatData = Model.SelectedSeats
+                    .Split(',')
+                    .Select(seatId =>
+                    {
+                        var parts = seatId.Split('C');
+                        var rowPart = parts[0].Substring(1);
+                        var colPart = parts[1];
+
+                        return new
+                        {
+                            Row = int.Parse(rowPart),
+                            Col = int.Parse(colPart)
+                        };
+                    })
+                    .ToList();
+
+                var seatGroups = seatData
+                    .GroupBy(s => s.Row)
+                    .OrderBy(g => g.Key); 
+
+                foreach (var group in seatGroups)
+                {
+                    var columns = group.OrderBy(x => x.Col).Select(x => x.Col).ToList();
+
+                    <p>
+                        Ред @group.Key: @string.Join(", ", columns)
+                    </p>
+                }
+            }
+            else
+            {
+                <span>Нема селектирани седишта!</span>
+            }
+        </td>
+    </tr>
+    <tr>
+        <th>Вкупна цена:</th>
+        <td>@Model.TotalPrice ден.</td>
+    </tr>
+    <tr>
+        <th>Емаил адреса:</th>
+        <td>@Model.Email</td>
+    </tr>
+</table>
+
+<p>
+    <a href="@Url.Action("Index", "Tickets")" class="btn btn-info">Прикажи ги сите купени билети</a>
+</p>

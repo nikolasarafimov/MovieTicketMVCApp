@@ -1,0 +1,102 @@
+﻿@model MovieTicketMVC.Models.Movie
+
+@{
+    ViewBag.Title = "Add movie";
+    var todayIso = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<h2>Додади филм</h2>
+
+@using (Html.BeginForm("Create", "Movies", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Title, "Наслов:")
+        @Html.EditorFor(m => m.Title, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.LengthInMinutes, "Должина (минути):")
+        @Html.EditorFor(m => m.LengthInMinutes, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(m => m.LengthInMinutes, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.Label("ReleaseDate", "Почеток на проекција:")
+        @Html.TextBox(
+            "ReleaseDate",      
+            "",                   
+            new
+              {
+                  @class = "form-control",
+              type = "date",
+              min = todayIso
+            }
+        )
+        @Html.ValidationMessage("ReleaseDate", "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Description, "Опис:")
+        @Html.EditorFor(m => m.Description, new { htmlAttributes = new { @class = "form-control", rows = 3 } })
+        @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Rating, "Рејтинг (0-10):")
+        @Html.EditorFor(m => m.Rating, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(m => m.Rating, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Actors, "Актери (одделени со запирања):")
+        @Html.EditorFor(m => m.Actors, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(m => m.Actors, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="videoFile">Upload Trailer Video:</label>
+        <input type="file" name="videoFile" id="videoFile" class="form-control" accept="video/mp4,video/webm,video/ogg" />
+
+        @Html.ValidationMessage("videoFile", "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Language, "Јазик / Произведено во:")
+        @Html.EditorFor(m => m.Language, new { htmlAttributes = new { @class = "form-control" } })
+        @Html.ValidationMessageFor(m => m.Language, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Рестрикција:</label>
+        <div>
+            <label style="margin-right:20px;">
+                @Html.RadioButtonFor(m => m.IsForAdults, "true") 18+
+            </label>
+            <label>
+                @Html.RadioButtonFor(m => m.IsForAdults, "false") Под 18
+            </label>
+        </div>
+        @Html.ValidationMessageFor(m => m.IsForAdults, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="form-group mb-3">
+        @Html.LabelFor(m => m.Genre, "Жанр:")
+        @Html.TextBoxFor(m => m.Genre, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Genre, "", new { @class = "text-danger" })
+    </div>
+
+    @Html.HiddenFor(m => m.IsCurrentlyShowing, new { Value = false })
+
+    <div>
+        <input type="submit" value="Додади" class="btn btn-primary" style="margin-right:10px;" />
+        @Html.ActionLink("Врати се назад", "ComingSoon", "Movies", null, new { @class = "btn btn-secondary" })
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
