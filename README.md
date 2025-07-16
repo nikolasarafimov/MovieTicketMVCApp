@@ -8,7 +8,6 @@ An advanced web application for managing and purchasing cinema tickets, built us
 
 ### 🏠 **1. Home Page**
 - Displays a welcome message upon loading
-- Highlights the active navigation item
 - Intuitive and responsive navigation bar
 
 ### 🎞️ **2. Movie Sections**
